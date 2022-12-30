@@ -1,0 +1,15 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.213.0/containers/docker-existing-dockerfile
+{
+	"name": "clouds",
+	"context": "..",
+	"dockerFile": "Dockerfile",
+	"settings": {},
+	"extensions": ["ms-python.python", "eamodio.gitlens"],
+	//"forwardPorts": [8061],
+  //"runArgs": ["-p", "8061:8061"],
+  "runArgs": ["--security-opt=seccomp=unconfined"],
+  "mounts": [
+    "src=/data,target=/data,type=bind",
+  ],
+}
