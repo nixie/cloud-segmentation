@@ -100,8 +100,8 @@ class Unet(pl.LightningModule):
             F.binary_cross_entropy_with_logits(y_hat, y)
         self.log('train_loss', loss)
 
-        #sch = self.lr_schedulers()
-        #sch.step()
+        sch = self.lr_schedulers()
+        sch.step()
 
         return {'loss': loss}
 
