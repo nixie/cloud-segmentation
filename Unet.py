@@ -11,6 +11,7 @@ import torchvision.transforms.functional as TF
 from torch import optim
 from torch.utils.data import DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
+import torchmetrics
 
 import pytorch_lightning as pl
 
@@ -109,7 +110,19 @@ class Unet(pl.LightningModule):
         y_hat = self.forward(x)
         loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
             F.binary_cross_entropy_with_logits(y_hat, y)
-        self.log('val_loss', loss)
+
+        y_hat_probs = torch.sigmoid(y_hat)
+        auroc = torchmetrics.functional.classification.binary_auroc(y_hat_probs, y)
+
+        prec = torchmetrics.functional.classification.binary_precision(y_hat_probs, y)
+        rec = torchmetrics.functional.classification.binary_recall(y_hat_probs, y)
+
+        self.log_dict({'loss/val': loss,
+                       'metrics/val_auroc':auroc,
+                       'metrics/val_prec': prec,
+                       'metrics/val_rec': rec,
+                       }, sync_dist=True)
+
         return {'val_loss': loss}
 
     def validation_end(self, outputs):
