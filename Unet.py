@@ -109,11 +109,12 @@ class Unet(pl.LightningModule):
         y_hat = self.forward(x)
         loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
             F.binary_cross_entropy_with_logits(y_hat, y)
+        self.log('val_loss', loss)
         return {'val_loss': loss}
 
     def validation_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        self.log('val_loss', avg_loss)
+        self.log('avg_val_loss', avg_loss)
         return {'avg_val_loss': avg_loss}
 
     def configure_optimizers(self):
