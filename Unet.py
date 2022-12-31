@@ -97,7 +97,6 @@ class Unet(pl.LightningModule):
         y_hat = self.forward(x)
         loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
             F.binary_cross_entropy_with_logits(y_hat, y)
-        tensorboard_logs = {'train_loss': loss}
         self.log('train_loss', loss)
         return {'loss': loss}
 
@@ -114,8 +113,8 @@ class Unet(pl.LightningModule):
 
     def validation_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'val_loss': avg_loss}
-        return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
+        self.log('val_loss', avg_loss)
+        return {'avg_val_loss': avg_loss}
 
     def configure_optimizers(self):
         return torch.optim.RMSprop(self.parameters(), lr=0.1, weight_decay=1e-8)
