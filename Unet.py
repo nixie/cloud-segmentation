@@ -12,7 +12,7 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
 import torchmetrics
-
+from torch.optim.lr_scheduler import ExponentialLR
 import pytorch_lightning as pl
 
 from dataset import CloudDataset
@@ -99,6 +99,10 @@ class Unet(pl.LightningModule):
         loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
             F.binary_cross_entropy_with_logits(y_hat, y)
         self.log('train_loss', loss)
+
+        #sch = self.lr_schedulers()
+        #sch.step()
+
         return {'loss': loss}
 
     def validation_step(self, batch, batch_nb):
@@ -131,6 +135,14 @@ class Unet(pl.LightningModule):
         return {'avg_val_loss': avg_loss}
 
     def configure_optimizers(self):
-        return torch.optim.RMSprop(self.parameters(), lr=0.1, weight_decay=1e-8)
+        optimizer = torch.optim.RMSprop(self.parameters(), lr=0.1, weight_decay=1e-8)
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+              'scheduler': ExponentialLR(optimizer, 0.999),
+              'interval': 'step'  # called after each training step
+            },
+        }
 
 
