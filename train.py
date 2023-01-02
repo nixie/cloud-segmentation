@@ -24,7 +24,7 @@ def main(hparams):
 
     torch.manual_seed(123)  # for random transforms
 
-    train_loader = DataLoader(train_ds, batch_size=4, pin_memory=True, shuffle=True)
+    train_loader = DataLoader(train_ds, batch_size=16, pin_memory=True, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=1, pin_memory=True, shuffle=False)
 
     os.makedirs(hparams.log_dir, exist_ok=True)
@@ -40,14 +40,20 @@ def main(hparams):
         verbose=True,
     )
 
-    logger = TensorBoardLogger(save_dir='./', max_queue=1, flush_secs=10)
+    from pytorch_lightning.callbacks import LearningRateMonitor
+    lr_monitor = LearningRateMonitor(logging_interval='step')
+
+    logger = TensorBoardLogger(save_dir=os.path.join(hparams.log_dir, 'logs'), flush_secs=10)
 
     # training
-    trainer = pl.Trainer(devices=4,
+    trainer = pl.Trainer(devices=1,
+                         accelerator='gpu',
                          logger=logger,
+                         max_epochs=1000,
+                         precision=16,
                          log_every_n_steps=1,
-                         callbacks=[checkpoint_callback, stop_callback])
-    trainer.fit(model, train_loader, val_loader, )
+                         callbacks=[checkpoint_callback, lr_monitor])
+    trainer.fit(model, train_loader, val_loader)
 
 if __name__ == '__main__':
     parser = ArgumentParser(add_help=False)
