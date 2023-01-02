@@ -77,7 +77,7 @@ class Unet(pl.LightningModule):
         self.up4 = up(128, 64)
         self.out = nn.Conv2d(64, self.n_classes, kernel_size=1)
 
-    def forward(self, x):  # x [NCHW]
+    def _forward(self, x):  # x [NCHW]
 
         x1 = self.inc(x)
         x2 = self.down1(x1)
@@ -90,8 +90,11 @@ class Unet(pl.LightningModule):
         x = self.up4(x, x1)
         return self.out(x)
 
+    def forward(self, x):
+      return self._forward(x)
+
     def infer(self, x):
-      y = self.forward(x)
+      y = self._forward(x)
       probs = torch.sigmoid(y)
       decisions = (probs > self.inference_threshold).int()
       return decisions.squeeze(1)
