@@ -58,12 +58,13 @@ class up(nn.Module):
         return self.conv(x)
 
 class Unet(pl.LightningModule):
-    def __init__(self, n_channels, n_classes):
+    def __init__(self, n_channels, n_classes, inference_threshold: float = 0.5):
         super(Unet, self).__init__()
 
         self.n_channels = n_channels
         self.n_classes = n_classes
         self.bilinear = True
+        self.inference_threshold = inference_threshold
 
         self.inc = double_conv(self.n_channels, 64)
         self.down1 = down(64, 128)
@@ -88,6 +89,12 @@ class Unet(pl.LightningModule):
         x = self.up3(x, x2)
         x = self.up4(x, x1)
         return self.out(x)
+
+    def infer(self, x):
+      y = self.forward(x)
+      probs = torch.sigmoid(y)
+      decisions = (probs > self.inference_threshold).int()
+      return decisions.squeeze(1)
 
     def training_step(self, batch, batch_nb):
         x, y, ix = batch
